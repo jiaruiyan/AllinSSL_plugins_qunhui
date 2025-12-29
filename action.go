@@ -75,7 +75,7 @@ func deploy(cfg map[string]any) (*Response, error) {
 		return nil, fmt.Errorf("failed to parse certificate: %w", err)
 	}
 	client := lib.Client{
-		Scheme:   "http",
+		Scheme:   synoScheme,
 		Host:     synoHostname,
 		Port:     synoPort,
 		UserName: synoUsername,

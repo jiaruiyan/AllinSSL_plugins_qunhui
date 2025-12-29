@@ -2,6 +2,7 @@ package lib
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -129,8 +130,12 @@ func (qunhuiClient *Client) Login() error {
 			MaxIdleConns:    10,
 			MaxConnsPerHost: 10,
 			IdleConnTimeout: 30 * time.Second,
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true, // 忽略证书验证
+			},
 		},
 	}
+
 	qunhuiUrl := fmt.Sprintf(
 		"%s://%s:%d/webapi/auth.cgi?api=SYNO.API.Auth&version=7&method=login&account=%s&passwd=%s&enable_syno_token=yes",
 		qunhuiClient.Scheme,
@@ -139,10 +144,11 @@ func (qunhuiClient *Client) Login() error {
 		qunhuiClient.UserName,
 		qunhuiClient.Password,
 	)
+
 	// 发送GET请求
 	resp, err := client.Get(qunhuiUrl)
 	if err != nil {
-		return fmt.Errorf("请求发生错误")
+		return fmt.Errorf("请求发生错误%v", err)
 	}
 	// 重要：记得关闭响应体
 	defer resp.Body.Close()
@@ -274,7 +280,17 @@ func (qunhuiClient *Client) CrtList() (*CertificateResponse, error) {
 	req.Header.Set("Cookie", fmt.Sprintf("id=%s", qunhuiClient.auth.sid))
 	req.Header.Set("X-SYNO-TOKEN", qunhuiClient.auth.synoToken)
 	// 发送请求
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			MaxIdleConns:    10,
+			MaxConnsPerHost: 10,
+			IdleConnTimeout: 30 * time.Second,
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true, // 忽略证书验证
+			},
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("发送请求失败: %v", err)
@@ -406,7 +422,17 @@ func uploadMultipleFilesAndParams(qhurl string, files []FileInfo, params map[str
 	// 设置User-Agent，模拟浏览器行为
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			MaxIdleConns:    10,
+			MaxConnsPerHost: 10,
+			IdleConnTimeout: 30 * time.Second,
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true, // 忽略证书验证
+			},
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("发送请求失败: %v", err)
